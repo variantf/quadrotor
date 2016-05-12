@@ -56,36 +56,48 @@ public:
 		int cnt1 = 0, cnt2 = 0, dx, dy, vx, vy;
 		tcnt = 0;
 		action = Stay; stepx = stepy = 0;
-		cv::Point c1, c2;
+		cv::Point c0, c1, c2;
 		int tot = cv::countNonZero(marker);
 		if (tot > marker.total() * 3 / 4)
 		{
 			stay_cnt = 0;
 			return Result(Down, 0, 0, 0, 0);
 		}
+		SearchPart(1, c1, cnt1, marker, cl);
+		cl.clear();
 		SearchPart(2, c2, cnt2, marker, cl);
 
+		if (cnt1 != 0)
+		{
+			c1.x /= cnt1; c1.y /= cnt1;
+			c0 = c1;
+		}
 		if (cnt2 != 0)
 		{
 			c2.x /= cnt2; c2.y /= cnt2;
+			if (!cnt1) c0 = c2;
 			if (cnt2 == 4)
 			{
 				Link(cl, c2, marker, frame);
 				MarkCenter(c2, frame);
+				c0 = c2;
 			}
+		}
+		if (cnt1 || cnt2)
+		{
 			if (last_pos.x || last_pos.y)
 			{
-				dx = marker.rows / 2 - c2.x, vx = c2.x - last_pos.x;
-				dy = marker.cols / 2 - c2.y, vy = c2.y - last_pos.y;
+				dx = marker.rows / 2 - c0.x, vx = c0.x - last_pos.x;
+				dy = marker.cols / 2 - c0.y, vy = c0.y - last_pos.y;
 				stepx = dx - vx, stepy = dy - vy;
 			}
-			last_pos = c2;
+			last_pos = c0;
 
 			int LR = 0, FB = 0;
-			if (c2.y < marker.cols / 2 - 50) LR = 1;
-			if (c2.y > marker.cols / 2 + 50) LR = 2;
-			if (c2.x < marker.rows / 2 - 50) FB = 1;
-			if (c2.x > marker.rows / 2 + 50) FB = 2;
+			if (c0.y < marker.cols / 2 - 50) LR = 1;
+			if (c0.y > marker.cols / 2 + 50) LR = 2;
+			if (c0.x < marker.rows / 2 - 50) FB = 1;
+			if (c0.x > marker.rows / 2 + 50) FB = 2;
 			if (LR + FB > 0)
 			{
 				tcnt++;
@@ -125,14 +137,12 @@ public:
 			}
 			if (action == Stay)
 			{
-				SearchPart(1, c1, cnt1, marker, cl);
-				//if (c2.y < m / 2 - 20) action = Left;
-				//else if (c2.y > m / 2 + 20) action = Right;
-				//else if (c2.x < n / 2 - 20) action = Front;
-				//else if (c2.x > n / 2 + 20) action = Back;
+				//if (c0.y < m / 2 - 20) action = Left;
+				//else if (c0.y > m / 2 + 20) action = Right;
+				//else if (c0.x < n / 2 - 20) action = Front;
+				//else if (c0.x > n / 2 + 20) action = Back;
 				if (cnt2 == 4 && cnt1 == 5 && action == Stay)
 				{
-					c1.x /= cnt1; c1.y /= cnt1;
 					if (abs(c1.x - c2.x) + abs(c1.y - c2.y) < 50) action = Down;
 				}
 			}
